@@ -17,12 +17,12 @@ function createPlayerTag(text) {
     return label;
 }
 
-// Función auxiliar para crear y agregar el cubo del jugador remoto (AZUL)
+
 function createOtherPlayerMesh(id, data) {
   
   let mesh;
 
-  // 1. Comprobar si la plantilla del modelo está lista (si no, usamos cubo de respaldo)
+  
   if (window.playerModelTemplate) {
       mesh = window.playerModelTemplate.clone();
   } else {
@@ -54,7 +54,7 @@ function clearOtherPlayers() {
             window.scene.remove(otherPlayers[id]);
         }
     });
-    // 🧹 IMPORTANTE: Reseteamos el objeto para que no guarde referencias a modelos antiguos
+    
     otherPlayers = {};
 }
 
@@ -65,8 +65,7 @@ export function initSocketClient() {
     console.log("Conectado al servidor con id:", socket.id);
   });
 
-  // 1. Envío de Datos: Asegúrate de que ry se envíe
-  // Esta función es llamada desde gameCore.js
+ 
   window.sendPlayerPosition = function(playerData) {
     socket.emit("playerMove", {
       x: playerData.position.x,
@@ -76,7 +75,7 @@ export function initSocketClient() {
     });
   };
 
-  // 2. Recepción de Datos: Asegúrate de que ry se reciba y aplique
+  
   socket.on("updatePlayer", (data) => {
     // Desestructuramos el objeto plano con ry
     const { id, x, y, z, ry } = data; 
