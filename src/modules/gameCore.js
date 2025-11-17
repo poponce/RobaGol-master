@@ -7,122 +7,101 @@ import {
 import $ from "jquery";
 import { setupPlayerControls } from "../controler/control.js"; 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-// --- ¡NUEVO! Importar el cargador de FBX ---
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 
 let scene, camera, renderer, player, controls, playerMovement;
 let css2dRenderer;
 const clock = new THREE.Clock();
 let playerModelTemplate = null;
 
-// --- ¡NUEVO! Variables de Animación ---
-let mixer; // El motor de animación de Three.js
-const animations = {}; // Objeto para guardar las acciones (Idle, Walk, etc.)
-// ------------------------------------
+let mixer; 
+const animations = {}; 
 
 window.collidableObjects = []; 
 
 function loadPlayerModel() {
   return new Promise((resolve, reject) => {
-    const loader = new GLTFLoader();
+    const loader = new GLTFLoader(); 
+    console.log("DEBUG: Cargando 'HoodieCharacter.glb'...");
+    
+    // Ruta corregida: sin /public y sin espacios
     loader.load(
-      "/public/models/Personaje.glb",
+      "/models/HoodieCharacter.glb", 
       (gltf) => {
         const model = gltf.scene;
-        model.scale.set(0.5, 0.5, 0.5);
-        model.rotation.y = Math.PI; // Rotar 180 grados si mira hacia atrás
-
-        // --- ¡NUEVO! Inicializar el AnimationMixer con el modelo ---
+        console.log("DEBUG: ¡ÉXITO! 'HoodieCharacter.glb' cargado.");
+        
+        // ¡AJUSTA ESTA ESCALA!
+        // Si tu personaje es gigante, prueba 0.1 o 0.01
+        // Si es pequeño, prueba 10 o 20.
+        model.scale.set(1, 1, 1); 
+        
         mixer = new THREE.AnimationMixer(model);
-        window.mixer = mixer; // Opcional: hacerlo global para debug
+        window.mixer = mixer;
+        console.log("DEBUG: Mixer creado.");
+
+        const animationNameMap = {
+            "CharacterArmature|CharacterArmature|Idle": "Idle",
+            "CharacterArmature|CharacterArmature|Run": "Run",
+            "CharacterArmature|CharacterArmature|Roll": "Roll"
+        };
+        
+        let animationsFound = 0;
+        gltf.animations.forEach((clip) => {
+            const shortName = animationNameMap[clip.name];
+            if (shortName) {
+                const action = mixer.clipAction(clip);
+                animations[shortName] = action;
+                animationsFound++;
+                console.log(`DEBUG: Animación registrada: '${clip.name}' como '${shortName}'`);
+            }
+        });
+
+        if (animationsFound === 0) {
+            console.warn("DEBUG: No se encontró NINGUNA animación. Revisa los nombres en gltf-viewer.");
+        }
+
+        if (animations['Idle']) {
+            animations['Idle'].play();
+            window.currentAction = animations['Idle'];
+            console.log("DEBUG: Reproduciendo 'Idle' por defecto.");
+        } else {
+            console.warn("DEBUG: No se encontró 'Idle'. El personaje puede quedar en T-Pose.");
+        }
         
         playerModelTemplate = model;
         window.playerModelTemplate = playerModelTemplate; 
-        resolve(model);
+        resolve(model); 
       },
       undefined, 
       (error) => {
-        console.error("Error al cargar Personaje.glb:", error);
-        playerModelTemplate = new THREE.Mesh(
-          new THREE.BoxGeometry(1, 2, 1),
-          new THREE.MeshStandardMaterial({ color: 0x808080 })
-        );
-        window.playerModelTemplate = playerModelTemplate;
-        resolve(playerModelTemplate);
+        console.error("¡ERROR FATAL! No se pudo cargar 'HoodieCharacter.glb':", error);
+        reject(error);
       }
     );
   });
 }
 
-// --- ¡NUEVO! Función para cargar animaciones (FBX o GLB) ---
-function loadAnimation(name, path) {
-    let loader;
-    const extension = path.split('.').pop().toLowerCase();
-    
-    if (extension === 'fbx') {
-        loader = new FBXLoader();
-    } else if (extension === 'glb' || extension === 'gltf') {
-        loader = new GLTFLoader();
-    } else {
-        console.error(`Formato de animación no soportado: ${extension}`);
-        return;
-    }
-
-    loader.load(
-        path,
-        (asset) => {
-            // asset puede ser un FBX (Object3D) o un GLB (objeto gltf)
-            const clip = asset.animations[0];
-            
-            if (!clip) {
-                console.warn(`El archivo ${path} no contiene animaciones.`);
-                return;
-            }
-            
-            clip.name = name; // Asignamos el nombre
-            
-            // Creamos la "acción" y la guardamos
-            const action = mixer.clipAction(clip);
-            animations[name] = action;
-            console.log(`Animación '${name}' cargada desde ${path}.`);
-
-            // Si es 'Idle', la reproducimos por defecto
-            if (name === 'Idle' && !window.currentAction) {
-                action.play();
-                window.currentAction = action; 
-            }
-        },
-        undefined,
-        (error) => {
-            console.error(`Error al cargar la animación ${path}:`, error);
-        }
-    );
-}
-// --------------------------------------------------------
-
 export async function initGameCore(container, initialSceneLoader) {
  
   if (!playerModelTemplate) {
-    await loadPlayerModel(); // Espera a que el modelo (y el mixer) estén listos
+    try {
+        await loadPlayerModel();
+    } catch (error) {
+        console.error("Fallo al cargar modelo de jugador, no se puede iniciar el juego.", error);
+        return; 
+    }
   }
 
-  // --- ¡NUEVO! Cargar todas las animaciones ---
-  // Asegúrate que estas rutas sean correctas
-  loadAnimation('Idle', '/public/models/Idle.fbx');
-  loadAnimation('Walk', '/public/models/Walk.fbx');
-  loadAnimation('Jump', '/public/models/Jump.fbx');
-  // loadAnimation('Run', '/public/models/Run.fbx'); // Si tienes una de correr
-  window.animations = animations; // Hacerlas globales para control.js
-  // --------------------------------------------
+  window.animations = animations; 
   
   window.collidableObjects = [];
-
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xa0a0a0);
   window.scene = scene;
 
+  // ¡AJUSTA ESTO! (Altura de los ojos)
   camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.set(0, 1.6, 0); 
+  camera.position.set(0, 1.6, 0); // Altura de ojos (1.6 metros)
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -136,7 +115,9 @@ export async function initGameCore(container, initialSceneLoader) {
   $(container).append(css2dRenderer.domElement);
 
   player = playerModelTemplate.clone();
-  player.position.set(0, 1, 0); 
+  // El 'player' (cuerpo) empieza en el suelo (Y=0)
+  // Se sincronizará con la cámara en animate()
+  player.position.set(camera.position.x, 0, camera.position.z); 
   scene.add(player);
   window.player = player;
 
@@ -166,36 +147,43 @@ export async function initGameCore(container, initialSceneLoader) {
 
 const playerBox = new THREE.Box3(); 
 const prevCameraPosition = new THREE.Vector3(); 
+const cameraHeight = 1.6; // Altura de los ojos
 
 function animate() {
   requestAnimationFrame(animate);
 
   const delta = clock.getDelta();
 
-  // --- ¡NUEVO! Actualizar el mixer en cada frame ---
   if (mixer) {
       mixer.update(delta);
   }
-  // ------------------------------------------------
 
-  if (player) {
+  if (player && playerMovement) {
+      // 1. Guardar pos. anterior de la CÁMARA
       prevCameraPosition.copy(camera.position);
-      
-      if (playerMovement) playerMovement.updateMovement(delta);
 
-      // Sincronización
+      // 2. Mover la CÁMARA (la lógica de control.js)
+      playerMovement.updateMovement(delta);
+
+      // --- 3. ¡LA SINCRONIZACIÓN! (El esqueleto/rig que mencionas) ---
+      // El modelo 'player' (el GLB) sigue a la 'camera'.
       player.position.x = camera.position.x;
       player.position.z = camera.position.z;
-      player.position.y = camera.position.y - 1.6; 
+      // Ponemos los pies del modelo en el suelo, restando la altura de los ojos
+      player.position.y = camera.position.y - cameraHeight; 
 
+      // Rotación: El cuerpo mira hacia donde miran los ojos
       const cameraDirection = new THREE.Vector3();
       camera.getWorldDirection(cameraDirection);
       player.rotation.y = Math.atan2(cameraDirection.x, cameraDirection.z) + Math.PI;
 
-      // Colisión
+      // 4. Actualizar matriz (para colisión y render)
       player.updateMatrixWorld(true);
-      playerBox.setFromObject(player);
+      // -----------------------------------------------------------------
 
+      // 5. Colisión (usa la caja del 'player' mesh)
+      playerBox.setFromObject(player);
+      
       let collisionDetected = false;
       for (let i = 0; i < window.collidableObjects.length; i++) {
           if (playerBox.intersectsBox(window.collidableObjects[i])) {
@@ -204,41 +192,37 @@ function animate() {
           }
       }
 
+      // 6. Si hay choque, REVERTIR LA CÁMARA
       if (collisionDetected) {
           camera.position.copy(prevCameraPosition);
+          // Volver a sincronizar el mesh a la pos. revertida
           player.position.x = camera.position.x;
           player.position.z = camera.position.z;
-          player.position.y = camera.position.y - 1.6; 
-          
-          if (playerMovement && playerMovement.velocity) {
-              playerMovement.velocity.x = 0;
-              playerMovement.velocity.z = 0;
-          }
+          player.position.y = camera.position.y - cameraHeight;
       }
-
+      
       if (window.playerHelper) window.playerHelper.update();
   }
 
-  // Código de UI y Render
+  // ... (Resto de animate()) ...
   if (window.sendPlayerPosition && player) {
     window.sendPlayerPosition({
       position: player.position,
       rotation: player.rotation,
     });
   }
-
   const camPosition = camera.position;
   const coordsElement = document.getElementById("coordinates");
   if (coordsElement) {
     coordsElement.textContent = `X: ${camPosition.x.toFixed(2)} | Y: ${camPosition.y.toFixed(2)} | Z: ${camPosition.z.toFixed(2)}`;
   }
-
   renderer.render(scene, camera);
   if (css2dRenderer) {
     css2dRenderer.render(scene, camera);
   }
 }
 
+// ... (handleResize y loadScene no cambian) ...
 function handleResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
@@ -247,10 +231,8 @@ function handleResize() {
     css2dRenderer.setSize(window.innerWidth, window.innerHeight);
   }
 }
-
 export function loadScene(sceneLoader) {
   window.collidableObjects = [];
-  
   const persistentObjects = [
     camera,
     player,
@@ -258,7 +240,6 @@ export function loadScene(sceneLoader) {
     scene.children.find((c) => c.isDirectionalLight),
     scene.children.find((c) => c.isAmbientLight),
   ];
-
   scene.children.slice().forEach((child) => {
     if (!persistentObjects.includes(child)) {
       scene.remove(child);
@@ -266,7 +247,6 @@ export function loadScene(sceneLoader) {
       if (child.material) child.material.dispose();
     }
   });
-
   sceneLoader(scene);
   console.log("Nuevo escenario cargado.");
 }
