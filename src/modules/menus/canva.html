@@ -24,7 +24,7 @@
 </style>
 </head>
 <body>
-<canvas id="gameCanvas"></canvas>
+<!-- <canvas id="gameCanvas"></canvas> -->
 <div id="coordinates">X: 0 | Y: 0 | Z: 0</div>
 
 <script type="module">
@@ -32,6 +32,7 @@ import { initGameCore, loadScene } from "../gameCore.js";
 import { setupLobbyScene } from "../levels/1.Stadium/scene/level_1.js";
 import { setupArenaScene } from "../levels/2.Forest/scene/level_2.js";
 import { setupRoomScene } from "../levels/3.Town/scene/level_3.js";
+import { initSocketClient } from "../../client.js"
 
 const container = document.body;
 const selectedLevel = localStorage.getItem('selectedLevel') || '1';
@@ -44,7 +45,18 @@ async function startGame(){
   }
 }
 
-startGame();
+
+
+async function initializeGame() {
+    // 1. ESPERAMOS que el núcleo del juego cargue (incluyendo el modelo GLB)
+    await startGame(); 
+    
+    // 2. SOLO ENTONCES inicializamos el cliente Socket.IO
+    initSocketClient();
+}
+
+initializeGame();
+
 </script>
 </body>
 </html>
