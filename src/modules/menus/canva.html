@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RobaGol</title>
+<style>
+  html, body { margin:0; padding:0; width:100%; height:100%; background:transparent; overflow:hidden; }
+  canvas { display:block; width:100%; height:100%; }
+
+  /* Coordenadas */
+  #coordinates {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 6px 10px;
+    background: rgba(0,0,0,0.5);
+    color: #c3f291;
+    font-family: monospace;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    z-index: 5;
+  }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<div id="coordinates">X: 0 | Y: 0 | Z: 0</div>
+
+<script type="module">
+import { initGameCore, loadScene } from "../gameCore.js"; 
+import { setupLobbyScene } from "../levels/1.Stadium/scene/level_1.js";
+import { setupArenaScene } from "../levels/2.Forest/scene/level_2.js";
+import { setupRoomScene } from "../levels/3.Town/scene/level_3.js";
+
+const container = document.body;
+const selectedLevel = localStorage.getItem('selectedLevel') || '1';
+
+async function startGame(){
+  switch(selectedLevel){
+    case '1': await initGameCore(container, setupLobbyScene); break;
+    case '2': await initGameCore(container, setupArenaScene); break;
+    case '3': await initGameCore(container, setupRoomScene); break;
+  }
+}
+
+startGame();
+</script>
+</body>
+</html>

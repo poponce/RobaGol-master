@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RobaGol - Menú</title>
+<style>
+  html, body { margin:0; padding:0; width:100%; height:100%; background:#111; font-family:Arial; color:#c3f291; display:flex; }
+  .menu-container { width:250px; padding:20px; background:#152915; display:flex; flex-direction:column; gap:15px; z-index:1; position:relative; }
+  .menu-title { font-size:1.8rem; margin-bottom:15px; color:#d6f4a6; }
+  .menu-part { display:none; flex-direction:column; gap:12px; }
+  .menu-part.active { display:flex; }
+  .menu-button { padding:10px 16px; border:2px solid #9ecf71; border-radius:6px; background:#1e3a1b; cursor:pointer; color:#c3f291; transition:0.2s; }
+  .menu-button:hover { background:#2a5a2b; transform:scale(1.02); }
+  .info-text { font-size:0.9rem; color:#b6e290; }
+
+  /* Pantalla de transición */
+  #transitionScreen {
+    position:fixed;
+    top:0; left:0; width:100%; height:100%;
+    background:#111;
+    display:flex; align-items:center; justify-content:center;
+    color:#c3f291;
+    font-size:2rem;
+    flex-direction:column;
+    z-index:10;
+    display:none;
+  }
+</style>
+</head>
+<body>
+
+<div class="menu-container">
+
+  <!-- Inicio -->
+  <div class="menu-part active" id="startMenu">
+    <div class="menu-title">RobaGol</div>
+    <div class="info-text">Presione Enter para continuar</div>
+  </div>
+
+  <!-- Nueva Partida -->
+  <div class="menu-part" id="newGameMenu">
+    <div class="menu-title">Nueva Partida</div>
+    <button class="menu-button" data-difficulty="Fácil">Fácil</button>
+    <button class="menu-button" data-difficulty="Medio">Medio</button>
+    <button class="menu-button" data-difficulty="Difícil">Difícil</button>
+    <button class="menu-button" data-target="levelMenu">Seleccionar Nivel</button>
+    <button class="menu-button" data-back="startMenu">Volver</button>
+  </div>
+
+  <!-- Selección de Nivel -->
+  <div class="menu-part" id="levelMenu">
+    <div class="menu-title">Seleccionar Nivel</div>
+    <button class="menu-button" data-level="1">Nivel 1</button>
+    <button class="menu-button" data-level="2">Nivel 2</button>
+    <button class="menu-button" data-level="3">Nivel 3</button>
+    <button class="menu-button" data-back="newGameMenu">Volver</button>
+  </div>
+
+</div>
+
+<!-- Pantalla de transición -->
+<div id="transitionScreen">
+  <div id="transitionText"></div>
+  <div class="info-text">Cargando juego...</div>
+</div>
+
+<script>
+const startMenu = document.getElementById('startMenu');
+const menuButtons = document.querySelectorAll('.menu-button');
+const transitionScreen = document.getElementById('transitionScreen');
+const transitionText = document.getElementById('transitionText');
+
+function showMenu(menuId){
+  document.querySelectorAll('.menu-part').forEach(menu => menu.classList.remove('active'));
+  document.getElementById(menuId).classList.add('active');
+}
+
+// Mostrar transición antes de ir al juego
+function showTransition(message, callback){
+  transitionText.textContent = message;
+  transitionScreen.style.display = 'flex';
+  setTimeout(callback, 1500); // 1.5 segundos de transición
+}
+
+// Enter para ir de inicio a Nueva Partida
+document.addEventListener('keydown', e => {
+  if(e.code === 'Enter' && startMenu.classList.contains('active')){
+    showMenu('newGameMenu');
+  }
+});
+
+menuButtons.forEach(btn => {
+  const back = btn.dataset.back;
+  const target = btn.dataset.target;
+  const difficulty = btn.dataset.difficulty;
+  const level = btn.dataset.level;
+
+  btn.addEventListener('click', () => {
+    if(back) showMenu(back);
+    if(target) showMenu(target);
+
+    // Dificultad -> Nivel 1 por defecto
+    if(difficulty){
+      localStorage.setItem('selectedDifficulty', difficulty);
+      localStorage.setItem('selectedLevel', '1');
+      showTransition(`Dificultad: ${difficulty}`, () => {
+        window.location.href = 'canva.html';
+      });
+    }
+
+    // Nivel seleccionado
+    if(level){
+      localStorage.setItem('selectedLevel', level);
+      localStorage.setItem('selectedDifficulty', 'Medio'); // default
+      showTransition(`Nivel ${level}`, () => {
+        window.location.href = 'canva.html';
+      });
+    }
+  });
+});
+</script>
+
+</body>
+</html>
