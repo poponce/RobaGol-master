@@ -2,330 +2,127 @@
 import * as THREE from "three";
 import { loadGLTFModel } from "../../../../models/modelLoader.js";
 
-/**
- * Define el contenido del Escenario del Lobby.
- * @param {THREE.Scene} scene La escena activa para añadir objetos.
- */
-
-function registerCollision(model, scene) {
+function registerCollision(model) {
     model.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(model);
-    
-    if (window.collidableObjects) {
-        window.collidableObjects.push(box);
-    }
+
+    if (!window.collidableObjects) window.collidableObjects = [];
+    window.collidableObjects.push(box);
+}
+
+/**
+ * Cargador genérico
+ */
+function spawnModels(scene, modelPath, items, enableCollision = false) {
+    items.forEach(({ x, y, z, scale = 1, name }) => {
+        loadGLTFModel(modelPath, scene, (model) => {
+            model.position.set(x, y, z);
+            model.scale.set(scale, scale, scale);
+            model.name = name;
+
+            if (enableCollision) registerCollision(model);
+
+            console.log(`${name} cargado en (${x}, ${y}, ${z})`);
+        });
+    });
 }
 
 export function setupArenaScene(scene) {
-    // 1. Terreno verde
+    // Terreno
     const terrain = new THREE.Mesh(
         new THREE.PlaneGeometry(200, 200),
         new THREE.MeshStandardMaterial({ color: 0x228b22 })
     );
-    terrain.rotateX(-Math.PI / 2);
-    terrain.name = "Lobby_Terrain";
+    terrain.rotation.x = -Math.PI / 2;
     scene.add(terrain);
 
-    // 2. Cuadrícula de Ayuda
-    const gridHelper = new THREE.GridHelper(200, 20, 0x444444, 0x888888);
-    gridHelper.name = "Lobby_Grid";
-    scene.add(gridHelper);
+    scene.add(new THREE.GridHelper(200, 20));
+    scene.add(new THREE.AxesHelper(10));
 
-    // 3. Sistema de Coordenadas
-    const axesHelper = new THREE.AxesHelper(10); 
-    axesHelper.name = "Lobby_Axes";
-    scene.add(axesHelper); 
+    // ************************************************************
+    // 1. ÁRBOLES
+    // ************************************************************
+    spawnModels(scene, "/models/stage_2/Arbol2.glb", [
+        { x: -60, y: 0, z: -10, name: "Lobby_Arbol" },
+        { x: -48, y: 0, z: 40, name: "Lobby_Arbol" },
+        { x: 22,  y: 0, z: 30, name: "Lobby_Arbol" },
+        { x: 10,  y: 0, z: 0,  name: "Lobby_Arbol" },
+        { x: 0,   y: 0, z: -35, name: "Lobby_Arbol" },
+        { x: -25, y: 0, z: -50, name: "Lobby_Arbol" },
+    ]);
 
-    // Cargar otros modelos 3D necesarios para el escenario
-    // Copiar y pegar
-    //ARBOL
-    loadGLTFModel("/models/stage_2/Arbol2.glb", scene, (Arbol2Model) => {
-        Arbol2Model.position.set(-60, 0, -10);
-        Arbol2Model.scale.set(1, 1, 1); 
-        Arbol2Model.name = "Lobby_Arbol";
-    });
-     loadGLTFModel("/models/stage_2/Arbol2.glb", scene, (Arbol2Model) => {
-        Arbol2Model.position.set(-48, 0, 40);
-        Arbol2Model.scale.set(1, 1, 1); 
-        Arbol2Model.name = "Lobby_Arbol";
-    });
-     loadGLTFModel("/models/stage_2/Arbol2.glb", scene, (Arbol2Model) => {
-        Arbol2Model.position.set(22, 0, 30);
-        Arbol2Model.scale.set(1, 1, 1); 
-        Arbol2Model.name = "Lobby_Arbol";
-    });
-     loadGLTFModel("/models/stage_2/Arbol2.glb", scene, (Arbol2Model) => {
-        Arbol2Model.position.set(10, 0, 0);
-        Arbol2Model.scale.set(1, 1, 1); 
-        Arbol2Model.name = "Lobby_Arbol";
-    });
-     loadGLTFModel("/models/stage_2/Arbol2.glb", scene, (Arbol2Model) => {
-        Arbol2Model.position.set(0, 0, -35);
-        Arbol2Model.scale.set(1, 1, 1); 
-        Arbol2Model.name = "Lobby_Arbol";
-    });
-     loadGLTFModel("/models/stage_2/Arbol2.glb", scene, (Arbol2Model) => {
-        Arbol2Model.position.set(-25, 0, -50);
-        Arbol2Model.scale.set(1, 1, 1); 
-        Arbol2Model.name = "Lobby_Arbol";
-    });
+    // ************************************************************
+    // 2. ARBUSTOS
+    // ************************************************************
+    spawnModels(scene, "/models/stage_2/Arbusto.glb", [
+        { x: -62, y: 0, z: -58, name: "Lobby_Arbusto" },
+        { x: 14,  y: 0, z: -23, name: "Lobby_Arbusto" },
+        { x: 85,  y: 0, z: 20,  name: "Lobby_Arbusto" },
+        { x: 58,  y: 0, z: 69,  name: "Lobby_Arbusto" },
+        { x: 11,  y: 0, z: 32,  name: "Lobby_Arbusto" },
+        { x: -30, y: 0, z: 45,  name: "Lobby_Arbusto" },
+        { x: -76, y: 0, z: 65,  name: "Lobby_Arbusto" },
+        { x: 65,  y: 0, z: 7,   name: "Lobby_Arbusto" },
+        { x: -50, y: 0, z: -26, name: "Lobby_Arbusto" },
+    ]);
 
+    // ************************************************************
+    // 3. BANDERAS
+    // ************************************************************
+    spawnModels(scene, "/models/stage_2/Bandera.glb", [
+        { x: 14,  y: 0, z: -23, name: "Lobby_Bandera" },
+        { x: 85,  y: 0, z: 20,  name: "Lobby_Bandera" },
+        { x: -30, y: 0, z: 45,  name: "Lobby_Bandera" },
+        { x: 65,  y: 0, z: 7,   name: "Lobby_Bandera" },
+    ]);
 
+    // ************************************************************
+    // 4. CASAS DE CAMPAÑA – con colisión
+    // ************************************************************
+    spawnModels(scene, "/models/stage_2/casa campaña.glb", [
+        { x: -34, y: 0, z: -31, name: "Lobby_CasaCampaña" },
+        { x: 20,  y: 0, z: -40, name: "Lobby_CasaCampaña" },
+        { x: 25,  y: 0, z: 4,   name: "Lobby_CasaCampaña" },
+        { x: 52,  y: 0, z: 40,  name: "Lobby_CasaCampaña" },
+        { x: 4,   y: 0, z: 52,  name: "Lobby_CasaCampaña" },
+        { x: -60, y: 0, z: 30,  name: "Lobby_CasaCampaña" },
+    ], true);
 
-//ARBUSTO Y BANDERAS
-//-------------Arbustos--------------
-    loadGLTFModel("/models/stage_2/Arbusto.glb", scene, (ArbustoModel) => {
-        ArbustoModel.position.set(-62, 0, -58);
-        ArbustoModel.scale.set(1, 1, 1); 
-        ArbustoModel.name = "Lobby_Arbusto";
-        console.log("Arbusto cargado y colocado.");
-    });
-    loadGLTFModel("/models/stage_2/Arbusto.glb", scene, (ArbustoModel) => {
-        ArbustoModel.position.set(14, 0, -23);
-        ArbustoModel.scale.set(1, 1, 1); 
-        ArbustoModel.name = "Lobby_Arbusto";
-        console.log("Arbusto cargado y colocado.");
-    });
-    loadGLTFModel("/models/stage_2/Arbusto.glb", scene, (ArbustoModel) => {
-        ArbustoModel.position.set(85, 0, 20);
-        ArbustoModel.scale.set(1, 1, 1); 
-        ArbustoModel.name = "Lobby_Arbusto";
-        console.log("Arbusto cargado y colocado.");
-    });
-    loadGLTFModel("/models/stage_2/Arbusto.glb", scene, (ArbustoModel) => {
-        ArbustoModel.position.set(58, 0, 69);
-        ArbustoModel.scale.set(1, 1, 1); 
-        ArbustoModel.name = "Lobby_Arbusto";
-        console.log("Arbusto cargado y colocado.");
-    });
-    loadGLTFModel("/models/stage_2/Arbusto.glb", scene, (ArbustoModel) => {
-        ArbustoModel.position.set(11, 0, 32);
-        ArbustoModel.scale.set(1, 1, 1); 
-        ArbustoModel.name = "Lobby_Arbusto";
-        console.log("Arbusto cargado y colocado.");
-    });
-    loadGLTFModel("/models/stage_2/Arbusto.glb", scene, (ArbustoModel) => {
-        ArbustoModel.position.set(-30, 0, 45);
-        ArbustoModel.scale.set(1, 1, 1); 
-        ArbustoModel.name = "Lobby_Arbusto";
-        console.log("Arbusto cargado y colocado.");
-    });
-    loadGLTFModel("/models/stage_2/Arbusto.glb", scene, (ArbustoModel) => {
-        ArbustoModel.position.set(-76, 0, 65);
-        ArbustoModel.scale.set(1, 1, 1); 
-        ArbustoModel.name = "Lobby_Arbusto";
-        console.log("Arbusto cargado y colocado.");
-    });
-    loadGLTFModel("/models/stage_2/Arbusto.glb", scene, (ArbustoModel) => {
-        ArbustoModel.position.set(65, 0, 7);
-        ArbustoModel.scale.set(1, 1, 1); 
-        ArbustoModel.name = "Lobby_Arbusto";
-        console.log("Arbusto cargado y colocado.");
-    });
-    loadGLTFModel("/models/stage_2/Arbusto.glb", scene, (ArbustoModel) => {
-        ArbustoModel.position.set(-50, 0, -26);
-        ArbustoModel.scale.set(1, 1, 1); 
-        ArbustoModel.name = "Lobby_Arbusto";
-        console.log("Arbusto cargado y colocado.");
-    });
+    // ************************************************************
+    // 5. PIEDRAS
+    // ************************************************************
+    spawnModels(scene, "/models/stage_2/Piedra 1.glb", [
+        { x: -57, y: 0, z: 13,  name: "Lobby_Piedra1" },
+        { x: -2,  y: 0, z: -52, name: "Lobby_Piedra1" },
+        { x: 22,  y: 0, z: 45,  name: "Lobby_Piedra1" },
+        { x: 50,  y: 0, z: -10, name: "Lobby_Piedra1" },
+        { x: 30,  y: 0, z: -60, name: "Lobby_Piedra1" },
+    ], true);
 
-    //------------Banderas---------------
+    spawnModels(scene, "/models/stage_2/Piedra 2.glb", [
+        { x: -20, y: 0, z: -80, name: "Lobby_Piedra2" },
+        { x: -40, y: 0, z: -42, name: "Lobby_Piedra2" },
+        { x: -37, y: 0, z: -27, name: "Lobby_Piedra2" },
+        { x: -20, y: 0, z: -20, name: "Lobby_Piedra2" },
+        { x: -40, y: 0, z: 30,  name: "Lobby_Piedra2" },
+    ], true);
 
-    loadGLTFModel("/models/stage_2/Bandera.glb", scene, (BanderaModel) => {
-        BanderaModel.position.set(14, 0, -23);
-        BanderaModel.scale.set(1, 1, 1); 
-        BanderaModel.name = "Lobby_Bandera";
-        console.log("Bandera cargado y colocado.");
-    });
-    loadGLTFModel("/models/stage_2/Bandera.glb", scene, (BanderaModel) => {
-        BanderaModel.position.set(85, 0, 20);
-        BanderaModel.scale.set(1, 1, 1); 
-        BanderaModel.name = "Lobby_Bandera";
-        console.log("Bandera cargado y colocado.");
-    });
-    loadGLTFModel("/models/stage_2/Bandera.glb", scene, (BanderaModel) => {
-        BanderaModel.position.set(-30, 0, 45);
-        BanderaModel.scale.set(1, 1, 1); 
-        BanderaModel.name = "Lobby_Bandera";
-        console.log("Bandera cargado y colocado.");
-    });
-    loadGLTFModel("/models/stage_2/Bandera.glb", scene, (BanderaModel) => {
-        BanderaModel.position.set(65, 0, 7);
-        BanderaModel.scale.set(1, 1, 1); 
-        BanderaModel.name = "Lobby_Bandera";
-        console.log("Bandera cargado y colocado.");
-    });
+    spawnModels(scene, "/models/stage_2/Piedra 3.glb", [
+        { x: -10, y: 0, z: 50, name: "Lobby_Piedra3" },
+        { x: 30,  y: 0, z: 65, name: "Lobby_Piedra3" },
+        { x: 16,  y: 0, z: -20, name: "Lobby_Piedra3" },
+        { x: 17,  y: 0, z: -60, name: "Lobby_Piedra3" },
+        { x: -10, y: 0, z: 20, name: "Lobby_Piedra3" },
+    ], true);
 
-//CASA DE CAMPAÑA
-    loadGLTFModel("/models/stage_2/casa campaña.glb", scene, (CasaCampañaModel) => {
-        CasaCampañaModel.position.set(-34, 0, -31);
-        CasaCampañaModel.scale.set(1, 1, 1); 
-        CasaCampañaModel.name = "Lobby_CasaCampaña";
-        console.log("CasaCampaña cargado y colocado.");
-        registerCollision(CasaCampañaModel, scene);
-    });
-loadGLTFModel("/models/stage_2/casa campaña.glb", scene, (CasaCampañaModel) => {
-        CasaCampañaModel.position.set(20, 0, -40);
-        CasaCampañaModel.scale.set(1, 1, 1); 
-        CasaCampañaModel.name = "Lobby_CasaCampaña";
-        console.log("CasaCampaña cargado y colocado.");
-        registerCollision(CasaCampañaModel, scene);
-    });
-    loadGLTFModel("/models/stage_2/casa campaña.glb", scene, (CasaCampañaModel) => {
-        CasaCampañaModel.position.set(25, 0, 4);
-        CasaCampañaModel.scale.set(1, 1, 1); 
-        CasaCampañaModel.name = "Lobby_CasaCampaña";
-        console.log("CasaCampaña cargado y colocado.");
-        registerCollision(CasaCampañaModel, scene);
-    });
-    loadGLTFModel("/models/stage_2/casa campaña.glb", scene, (CasaCampañaModel) => {
-        CasaCampañaModel.position.set(52, 0, 40);
-        CasaCampañaModel.scale.set(1, 1, 1); 
-        CasaCampañaModel.name = "Lobby_CasaCampaña";
-        console.log("CasaCampaña cargado y colocado.");
-        registerCollision(CasaCampañaModel, scene);
-    });
-    loadGLTFModel("/models/stage_2/casa campaña.glb", scene, (CasaCampañaModel) => {
-        CasaCampañaModel.position.set(4, 0, 52);
-        CasaCampañaModel.scale.set(1, 1, 1); 
-        CasaCampañaModel.name = "Lobby_CasaCampaña";
-        console.log("CasaCampaña cargado y colocado.");
-        registerCollision(CasaCampañaModel, scene);
-    });
-    loadGLTFModel("/models/stage_2/casa campaña.glb", scene, (CasaCampañaModel) => {
-        CasaCampañaModel.position.set(-60, 0, 30);
-        CasaCampañaModel.scale.set(1, 1, 1); 
-        CasaCampañaModel.name = "Lobby_CasaCampaña";
-        console.log("CasaCampaña cargado y colocado.");
-        registerCollision(CasaCampañaModel, scene);
-    });
-
-
-//PIEDRAS
-//--------------Piedra 1---------------
-    loadGLTFModel("/models/stage_2/Piedra 1.glb", scene, (Piedra1Model) => {
-        Piedra1Model.position.set(-57, 0, 13);
-        Piedra1Model.scale.set(1, 1, 1); 
-        Piedra1Model.name = "Lobby_Piedra1";
-        registerCollision(Piedra1Model, scene);
-    });
-    loadGLTFModel("/models/stage_2/Piedra 1.glb", scene, (Piedra1Model) => {
-        Piedra1Model.position.set(-2, 0, -52);
-        Piedra1Model.scale.set(1, 1, 1); 
-        Piedra1Model.name = "Lobby_Piedra1";
-        registerCollision(Piedra1Model, scene);
-    });
-    loadGLTFModel("/models/stage_2/Piedra 1.glb", scene, (Piedra1Model) => {
-        Piedra1Model.position.set(22, 0, 45);
-        Piedra1Model.scale.set(1, 1, 1); 
-        Piedra1Model.name = "Lobby_Piedra1";
-        registerCollision(Piedra1Model, scene);
-    });
-    loadGLTFModel("/models/stage_2/Piedra 1.glb", scene, (Piedra1Model) => {
-        Piedra1Model.position.set(50, 0, -10);
-        Piedra1Model.scale.set(1, 1, 1); 
-        Piedra1Model.name = "Lobby_Piedra1";
-        registerCollision(Piedra1Model, scene);
-    });
-    loadGLTFModel("/models/stage_2/Piedra 1.glb", scene, (Piedra1Model) => {
-        Piedra1Model.position.set(30, 0, -60);
-        Piedra1Model.scale.set(1, 1, 1); 
-        Piedra1Model.name = "Lobby_Piedra1";
-        registerCollision(Piedra1Model, scene);
-    });
-
-    //------------------Piedra 2----------------
-    loadGLTFModel("/models/stage_2/Piedra 2.glb", scene, (Piedra2Model) => {
-        Piedra2Model.position.set(-20, 0, -80);
-        Piedra2Model.scale.set(1, 1, 1); 
-        Piedra2Model.name = "Lobby_Piedra2";
-        registerCollision(Piedra2Model, scene);
-    });
-    loadGLTFModel("/models/stage_2/Piedra 2.glb", scene, (Piedra2Model) => {
-        Piedra2Model.position.set(-40, 0, -42);
-        Piedra2Model.scale.set(1, 1, 1); 
-        Piedra2Model.name = "Lobby_Piedra2";
-        registerCollision(Piedra2Model, scene);
-    });
-    loadGLTFModel("/models/stage_2/Piedra 2.glb", scene, (Piedra2Model) => {
-        Piedra2Model.position.set(-37, 0, -27);
-        Piedra2Model.scale.set(1, 1, 1); 
-        Piedra2Model.name = "Lobby_Piedra2";
-        registerCollision(Piedra2Model, scene);
-    });
-    loadGLTFModel("/models/stage_2/Piedra 2.glb", scene, (Piedra2Model) => {
-        Piedra2Model.position.set(-20, 0, -20);
-        Piedra2Model.scale.set(1, 1, 1); 
-        Piedra2Model.name = "Lobby_Piedra2";
-        registerCollision(Piedra2Model, scene);
-    });
-    loadGLTFModel("/models/stage_2/Piedra 2.glb", scene, (Piedra2Model) => {
-        Piedra2Model.position.set(-40, 0, 30);
-        Piedra2Model.scale.set(1, 1, 1); 
-        Piedra2Model.name = "Lobby_Piedra2";
-        registerCollision(Piedra2Model, scene);
-    });
-    //-------------Piedra 3---------------------
-    loadGLTFModel("/models/stage_2/Piedra 3.glb", scene, (Piedra3Model) => {
-        Piedra3Model.position.set(-10, 0, 50);
-        Piedra3Model.scale.set(1, 1, 1); 
-        Piedra3Model.name = "Lobby_Piedra3";
-        registerCollision(Piedra3Model, scene);
-    });
-    loadGLTFModel("/models/stage_2/Piedra 3.glb", scene, (Piedra3Model) => {
-        Piedra3Model.position.set(30, 0, 65);
-        Piedra3Model.scale.set(1, 1, 1); 
-        Piedra3Model.name = "Lobby_Piedra3";
-        registerCollision(Piedra3Model, scene);
-    });
-    loadGLTFModel("/models/stage_2/Piedra 3.glb", scene, (Piedra3Model) => {
-        Piedra3Model.position.set(16, 0, -20);
-        Piedra3Model.scale.set(1, 1, 1); 
-        Piedra3Model.name = "Lobby_Piedra3";
-        registerCollision(Piedra3Model, scene);
-    });
-    loadGLTFModel("/models/stage_2/Piedra 3.glb", scene, (Piedra3Model) => {
-        Piedra3Model.position.set(17, 0, -60);
-        Piedra3Model.scale.set(1, 1, 1); 
-        Piedra3Model.name = "Lobby_Piedra3";
-        registerCollision(Piedra3Model, scene);
-    });
-    loadGLTFModel("/models/stage_2/Piedra 3.glb", scene, (Piedra3Model) => {
-        Piedra3Model.position.set(-10, 0, 20);
-        Piedra3Model.scale.set(1, 1, 1); 
-        Piedra3Model.name = "Lobby_Piedra3";
-        registerCollision(Piedra3Model, scene);
-    });
-
-    //SEÑAL
-    loadGLTFModel("/models/stage_2/señal.glb", scene, (señalModel) => {
-        señalModel.position.set(-53, 0, -24);
-        señalModel.scale.set(1, 1, 1); 
-        señalModel.name = "Lobby_señal";
-        registerCollision(señalModel, scene);
-    });
-    loadGLTFModel("/models/stage_2/señal.glb", scene, (señalModel) => {
-        señalModel.position.set(-56, 0, -58);
-        señalModel.scale.set(1, 1, 1); 
-        señalModel.name = "Lobby_señal";
-        registerCollision(señalModel, scene);
-    });
-    loadGLTFModel("/models/stage_2/señal.glb", scene, (señalModel) => {
-        señalModel.position.set(66, 0, 10);
-        señalModel.scale.set(1, 1, 1); 
-        señalModel.name = "Lobby_señal";
-        registerCollision(señalModel, scene);
-    });
-    loadGLTFModel("/models/stage_2/señal.glb", scene, (señalModel) => {
-        señalModel.position.set(53, 0, 68);
-        señalModel.scale.set(1, 1, 1); 
-        señalModel.name = "Lobby_señal";
-        registerCollision(señalModel, scene);
-    });
-    loadGLTFModel("/models/stage_2/señal.glb", scene, (señalModel) => {
-        señalModel.position.set(-10, 0, 30);
-        señalModel.scale.set(1, 1, 1); 
-        señalModel.name = "Lobby_señal";
-        registerCollision(señalModel, scene);
-    });
+    // ************************************************************
+    // 6. SEÑALES – con colisiones
+    // ************************************************************
+    spawnModels(scene, "/models/stage_2/señal.glb", [
+        { x: -53, y: 0, z: -24, name: "Lobby_Señal" },
+        { x: -56, y: 0, z: -58, name: "Lobby_Señal" },
+        { x: 66,  y: 0, z: 10,  name: "Lobby_Señal" },
+        { x: 53,  y: 0, z: 68,  name: "Lobby_Señal" },
+        { x: -10, y: 0, z: 30,  name: "Lobby_Señal" },
+    ], true);
 }
